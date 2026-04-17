@@ -209,7 +209,7 @@ const Profile: FC = () => {
           publicKey: {
             challenge: crypto.getRandomValues(new Uint8Array(32)),
             rp: { name: 'Project Dwayne', id: window.location.hostname },
-            user: { id: new TextEncoder().encode('ishaan'), name: 'ishaan', displayName: 'Ishaan' },
+            user: { id: new TextEncoder().encode('user'), name: 'user', displayName: 'User' },
             pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
             authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
             timeout: 60000,
