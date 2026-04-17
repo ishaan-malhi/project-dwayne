@@ -1,9 +1,12 @@
 import { useState, type FC } from 'react'
 import { useNutritionStore } from '../store/nutritionStore'
 import { useSettingsStore } from '../store/settingsStore'
+import { useSessionStore } from '../store/sessionStore'
 import { MACRO_TARGETS, WATER_TARGET_ML } from '../data/nutrition'
-import { getDayType, today, formatWater } from '../utils/plan'
+import { getDayType, today, getDaysRemaining, getTotalPlanDays } from '../utils/plan'
 import MealAddSheet from '../components/MealAddSheet'
+import WaterCard from '../components/WaterCard'
+import ProgressRing from '../components/ProgressRing'
 import type { MealEntry } from '../types'
 
 type Category = MealEntry['category']
@@ -23,6 +26,10 @@ const Food: FC = () => {
   const macroTarget = MACRO_TARGETS[dayType]
   const waterTarget = WATER_TARGET_ML[dayType]
 
+  const streak = useSessionStore(s => s.getStreak())
+  const daysLeft = getDaysRemaining()
+  const totalDays = getTotalPlanDays()
+
   const { getLog, removeMeal, updateWater, proteinTotal, caloriesTotal } = useNutritionStore()
   const { claudeApiKey, setApiKey } = useSettingsStore()
 
@@ -37,10 +44,6 @@ const Food: FC = () => {
   const now = new Date()
   const hour = now.getHours()
   const showProteinFloor = hour >= 21 && proteinLogged < 140
-
-  const addWater = (delta: number) => {
-    updateWater(date, (log?.water ?? 0) + delta)
-  }
 
   const formatTime = (iso: string) => {
     const d = new Date(iso)
@@ -69,12 +72,21 @@ const Food: FC = () => {
       {/* Header */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: '#f0f0f0' }}>Food Diary</span>
-        <button
-          onClick={() => { setApiKeyInput(claudeApiKey); setShowSettings(true) }}
-          style={{ fontSize: 11, color: claudeApiKey ? '#47ff8a' : '#ff4747', background: 'none', border: 'none', padding: 0 }}
-        >
-          {claudeApiKey ? 'API ✓' : 'Set API key'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setApiKeyInput(claudeApiKey); setShowSettings(true) }}
+            style={{ fontSize: 11, color: claudeApiKey ? '#47ff8a' : '#ff4747', background: 'none', border: 'none', padding: 0 }}
+          >
+            {claudeApiKey ? 'API ✓' : 'Set API key'}
+          </button>
+          {streak > 0 && (
+            <div className="flex items-center gap-1">
+              <span style={{ fontSize: 13 }}>🔥</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#ffaa47' }}>{streak}</span>
+            </div>
+          )}
+          <ProgressRing daysLeft={daysLeft} totalDays={totalDays} />
+        </div>
       </div>
 
       {showProteinFloor && (
@@ -153,36 +165,11 @@ const Food: FC = () => {
         </div>
 
         {/* Water tracker */}
-        <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, padding: '12px 14px' }}>
-          <div className="flex items-center justify-between mb-3">
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Water</span>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: '#f0f0f0' }}>
-              {formatWater(waterLogged)} <span style={{ color: '#6b6b6b' }}>/ {formatWater(waterTarget)}</span>
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {[250, 500, 750, 1000].map(ml => (
-              <button
-                key={ml}
-                onClick={() => addWater(ml)}
-                style={{
-                  flex: 1, padding: '7px 0', borderRadius: 5, fontSize: 11,
-                  background: '#1c1c1c', border: '1px solid #222', color: '#f0f0f0', fontWeight: 500,
-                }}
-              >
-                +{ml < 1000 ? `${ml}ml` : '1L'}
-              </button>
-            ))}
-          </div>
-          {waterLogged > 0 && (
-            <button
-              onClick={() => updateWater(date, Math.max(0, waterLogged - 250))}
-              style={{ marginTop: 6, fontSize: 10, color: '#6b6b6b', background: 'none', border: 'none', padding: 0 }}
-            >
-              − undo 250ml
-            </button>
-          )}
-        </div>
+        <WaterCard
+          waterLogged={waterLogged}
+          waterTarget={waterTarget}
+          onUpdate={ml => updateWater(date, ml)}
+        />
 
         {/* Meals grouped by category */}
         <div>

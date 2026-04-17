@@ -5,7 +5,9 @@ import { useSettingsStore } from '../store/settingsStore'
 import {
   getDayType, getWeekForDate, getPhaseForDate, getPhaseForWeek, getLoadForPhase,
   formatShortDate, addDays, today, isWeek6TimeTrialDay, getSpeedTarget, getZone2Duration,
+  getDaysRemaining, getTotalPlanDays,
 } from '../utils/plan'
+import ProgressRing from '../components/ProgressRing'
 import { compressPhoto } from '../utils/photoUtils'
 import { PHASES, PLAN_START } from '../data/phases'
 import { STRENGTH_A, STRENGTH_B } from '../data/sessions'
@@ -46,23 +48,34 @@ function Sparkline({ data, color, height = 40 }: { data: number[]; color: string
   )
 }
 
-function PhotoCell({ week, currentWeek, hasPhoto, isMissed, onCapture }: {
+function PhotoCell({ week, currentWeek, hasPhoto, isMissed, photoUnlocked, onCapture, onView, onUnlock }: {
   week: number
   currentWeek: number
   hasPhoto: boolean
   isMissed: boolean
+  photoUnlocked: boolean
   onCapture: () => void
+  onView: () => void
+  onUnlock: () => void
 }) {
   const isAvailable = week === currentWeek && !hasPhoto
+  const isLocked = hasPhoto && !photoUnlocked
   const color = hasPhoto ? '#47ff8a' : isMissed ? '#ff4747' : isAvailable ? '#5ba3ff' : '#333'
+
+  const handleClick = () => {
+    if (isLocked) { onUnlock(); return }
+    if (hasPhoto && photoUnlocked) { onView(); return }
+    if (isAvailable) onCapture()
+  }
+
   return (
     <button
-      onClick={isAvailable ? onCapture : undefined}
+      onClick={handleClick}
       aria-label={`Week ${week} photo`}
       style={{
         flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
         background: 'none', border: 'none', padding: '4px 0',
-        cursor: isAvailable ? 'pointer' : 'default',
+        cursor: (isAvailable || hasPhoto) ? 'pointer' : 'default',
         opacity: week > currentWeek ? 0.35 : 1,
       }}
     >
@@ -76,7 +89,7 @@ function PhotoCell({ week, currentWeek, hasPhoto, isMissed, onCapture }: {
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 10, fontWeight: 700, color, lineHeight: 1,
           }}>
-            {hasPhoto ? '✓' : '✕'}
+            {hasPhoto ? (isLocked ? '🔒' : '✓') : '✕'}
           </span>
         )}
       </div>
@@ -147,6 +160,9 @@ const Profile: FC = () => {
   const [bfEditInput, setBfEditInput] = useState('')
   const photoRef = useRef<HTMLInputElement>(null)
   const [photoWeek, setPhotoWeek] = useState<number | null>(null)
+  const [photoUnlocked, setPhotoUnlocked] = useState(false)
+  const [biometricPending, setBiometricPending] = useState(false)
+  const [viewingPhotoWeek, setViewingPhotoWeek] = useState<number | null>(null)
 
   const { logs } = useSessionStore()
   const streak = useSessionStore(s => s.getStreak())
@@ -157,6 +173,8 @@ const Profile: FC = () => {
   const currentWeek = getWeekForDate(todayStr)
   const currentPhase = getPhaseForDate(todayStr)
   const phaseInfo = PHASES.find(p => p.phase === currentPhase)
+  const daysLeft = getDaysRemaining()
+  const totalDays = getTotalPlanDays()
 
   const weightData = weightHistory()
   const latestEntry = weightData.slice(-1)[0]
@@ -164,6 +182,51 @@ const Profile: FC = () => {
   const latestBf = useProgressStore(s => s.getEntry(latestEntry?.date ?? ''))?.bfPercent
 
   const photoThisWeek = getWeeklyPhoto(currentWeek)
+
+  const unlockPhotos = async () => {
+    if (biometricPending || photoUnlocked) return
+    setBiometricPending(true)
+    try {
+      const available = await (PublicKeyCredential as { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> })
+        .isUserVerifyingPlatformAuthenticatorAvailable?.() ?? false
+      if (!available) {
+        setPhotoUnlocked(true)
+        return
+      }
+      const storedId = localStorage.getItem('dwayne_photo_cred_id')
+      if (!storedId) {
+        const cred = await navigator.credentials.create({
+          publicKey: {
+            challenge: crypto.getRandomValues(new Uint8Array(32)),
+            rp: { name: 'Project Dwayne', id: window.location.hostname },
+            user: { id: new TextEncoder().encode('ishaan'), name: 'ishaan', displayName: 'Ishaan' },
+            pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+            authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+            timeout: 60000,
+          },
+        }) as PublicKeyCredential | null
+        if (cred) {
+          localStorage.setItem('dwayne_photo_cred_id', btoa(String.fromCharCode(...new Uint8Array(cred.rawId))))
+          setPhotoUnlocked(true)
+        }
+      } else {
+        const rawId = Uint8Array.from(atob(storedId), c => c.charCodeAt(0))
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge: crypto.getRandomValues(new Uint8Array(32)),
+            allowCredentials: [{ id: rawId, type: 'public-key' }],
+            userVerification: 'required',
+            timeout: 60000,
+          },
+        })
+        if (assertion) setPhotoUnlocked(true)
+      }
+    } catch {
+      // User cancelled or not supported — stay locked
+    } finally {
+      setBiometricPending(false)
+    }
+  }
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -214,12 +277,15 @@ const Profile: FC = () => {
           </span>
           {phaseInfo && <span style={{ fontSize: 11, color: '#6b6b6b' }}> — {phaseInfo.name}</span>}
         </div>
-        {streak > 0 && (
-          <div className="flex items-center gap-1">
-            <span style={{ fontSize: 13 }}>🔥</span>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#ffaa47' }}>{streak}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {streak > 0 && (
+            <div className="flex items-center gap-1">
+              <span style={{ fontSize: 13 }}>🔥</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#ffaa47' }}>{streak}</span>
+            </div>
+          )}
+          <ProgressRing daysLeft={daysLeft} totalDays={totalDays} />
+        </div>
       </div>
 
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -300,7 +366,10 @@ const Profile: FC = () => {
         {/* Weekly photo section */}
         <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, padding: '12px 14px' }}>
           <div className="flex items-center justify-between mb-3">
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Progress Photos</span>
+            <div className="flex items-center gap-2">
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Progress Photos</span>
+              {!photoUnlocked && <span style={{ fontSize: 10 }}>🔒</span>}
+            </div>
             {!photoThisWeek && <span style={{ fontSize: 10, color: '#5ba3ff' }}>Tap W{currentWeek} to log</span>}
           </div>
           <div style={{ display: 'flex' }}>
@@ -311,7 +380,10 @@ const Profile: FC = () => {
                 currentWeek={currentWeek}
                 hasPhoto={!!getWeeklyPhoto(w)}
                 isMissed={w < currentWeek && !getWeeklyPhoto(w)}
+                photoUnlocked={photoUnlocked}
                 onCapture={() => triggerPhotoCapture(w)}
+                onView={() => setViewingPhotoWeek(w)}
+                onUnlock={unlockPhotos}
               />
             ))}
           </div>
@@ -463,6 +535,28 @@ const Profile: FC = () => {
       </div>
 
       <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
+
+      {/* Photo viewer overlay */}
+      {viewingPhotoWeek !== null && (() => {
+        const entry = getWeeklyPhoto(viewingPhotoWeek)
+        return entry ? (
+          <div
+            role="dialog"
+            aria-label={`Week ${viewingPhotoWeek} progress photo`}
+            onClick={() => setViewingPhotoWeek(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          >
+            <img
+              src={`data:image/jpeg;base64,${entry.photoBase64}`}
+              alt={`Week ${viewingPhotoWeek} progress`}
+              style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 8, objectFit: 'contain' }}
+            />
+            <span style={{ color: '#6b6b6b', fontSize: 11, marginTop: 12, fontFamily: 'JetBrains Mono, monospace' }}>
+              W{viewingPhotoWeek} · {entry.date} · tap to close
+            </span>
+          </div>
+        ) : null
+      })()}
 
     </div>
   )
