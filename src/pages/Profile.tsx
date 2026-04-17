@@ -85,8 +85,8 @@ function PhotoCell({ week, currentWeek, hasPhoto, isMissed, photoUnlocked, onCap
           <circle cx="12" cy="7" r="4"/>
         </svg>
         {hasPhoto && isLocked && (
-          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <span style={{ position: 'absolute', bottom: -2, right: -2, background: '#141414', borderRadius: 3, padding: 1, display: 'flex' }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
@@ -556,7 +556,7 @@ const Profile: FC = () => {
 
       </div>
 
-      <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
+      <input ref={photoRef} type="file" accept="image/*" aria-label="Upload progress photo" onChange={handlePhotoSelect} style={{ display: 'none' }} />
 
       {/* Photo viewer overlay */}
       {viewingPhotoWeek !== null && (() => {
