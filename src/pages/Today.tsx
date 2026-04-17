@@ -81,6 +81,8 @@ const Today: FC = () => {
     s.timing === 'pre-session' && s.sessionTypes?.includes(dayType)
   )
   const isTrainingDay = dayType !== 'REST'
+  const allSupps = [...dailySupps, ...(isTrainingDay ? todaySupps : [])]
+  const checkedCount = allSupps.filter(s => checkedSupplements.includes(s.name)).length
 
   const now = new Date()
   const hour = now.getHours()
@@ -122,10 +124,10 @@ const Today: FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>
+          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#999' }}>
             Phase {phase} · Wk {week}
           </span>
-          {phaseInfo && <span style={{ fontSize: 10, color: '#6b6b6b' }}>— {phaseInfo.name}</span>}
+          {phaseInfo && <span style={{ fontSize: 10, color: '#999' }}>— {phaseInfo.name}</span>}
         </div>
       </div>
 
@@ -230,10 +232,17 @@ const Today: FC = () => {
               {VO2_PARAMS.notes && <span style={{ fontSize: 11, color: '#999' }}>{VO2_PARAMS.notes}</span>}
             </div>
           ) : dayType === 'ZONE2' ? (
-            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div className="flex justify-between">
-                <span style={{ fontSize: 13, color: '#f0f0f0' }}>Bike — {zone2Duration}</span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: sessionColor }}>135–145 bpm</span>
+            <div style={{ padding: '10px 14px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, color: '#f0f0f0', fontWeight: 500, lineHeight: 1 }}>{zone2Duration}</div>
+                  <div style={{ fontSize: 9, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>Duration</div>
+                </div>
+                <div style={{ width: 1, height: 28, background: '#222', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, color: sessionColor, fontWeight: 500, lineHeight: 1 }}>135–145</div>
+                  <div style={{ fontSize: 9, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>bpm</div>
+                </div>
               </div>
               <span style={{ fontSize: 11, color: '#999' }}>Nasal breathing only. Fully conversational.</span>
             </div>
@@ -268,13 +277,13 @@ const Today: FC = () => {
 
           {/* Primary Log CTA — full width, session color */}
           {showLogCTA && (
-            <div style={{ padding: '0 14px 14px' }}>
+            <div style={{ padding: '0 14px 14px', borderTop: '1px solid #1c1c1c', paddingTop: 12 }}>
               <button
                 onClick={() => setShowLog(true)}
                 aria-label={`Log ${SESSION_LABELS[dayType]} session`}
                 style={{
                   width: '100%', padding: '12px', borderRadius: 8,
-                  background: sessionColor, color: '#0a0a0a',
+                  background: `${sessionColor}e6`, color: '#0a0a0a',
                   fontSize: 13, fontWeight: 600, border: 'none',
                   letterSpacing: '0.01em',
                 }}
@@ -329,9 +338,16 @@ const Today: FC = () => {
             onClick={() => setShowSupplements(v => !v)}
           >
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Supplements</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.15s ease-out', transform: showSupplements ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <div className="flex items-center gap-2">
+              {!showSupplements && allSupps.length > 0 && (
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: checkedCount === allSupps.length ? '#47ff8a' : '#6b6b6b' }}>
+                  {checkedCount}/{allSupps.length}
+                </span>
+              )}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.15s ease-out', transform: showSupplements ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
           </button>
           {showSupplements && (
             <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -383,8 +399,8 @@ const Today: FC = () => {
           )}
         </div>
 
-        {/* Tip */}
-        <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: 8, padding: '12px 14px' }}>
+        {/* Tip — plain text, no card affordance */}
+        <div style={{ borderLeft: '2px solid #222', paddingLeft: 12, paddingBottom: 4 }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 6 }}>Today's note</p>
           <p style={{ fontSize: 12, color: '#999', lineHeight: 1.6 }}>{tip}</p>
         </div>

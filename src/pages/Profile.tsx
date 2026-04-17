@@ -282,10 +282,10 @@ const Profile: FC = () => {
       {/* Header */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#999' }}>
             Phase {currentPhase} · Week {currentWeek}
           </span>
-          {phaseInfo && <span style={{ fontSize: 11, color: '#6b6b6b' }}> — {phaseInfo.name}</span>}
+          {phaseInfo && <span style={{ fontSize: 11, color: '#999' }}> — {phaseInfo.name}</span>}
         </div>
         <div className="flex items-center gap-3">
           {streak > 0 && (

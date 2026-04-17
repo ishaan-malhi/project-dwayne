@@ -29,12 +29,12 @@ const WaterCard: FC<Props> = ({ waterLogged, waterTarget, onUpdate, interactive 
           const partial = !filled && waterLogged > segMl * i
           const partialPct = partial ? Math.round(((waterLogged - segMl * i) / segMl) * 100) : 0
           return (
-            <div key={i} style={{ flex: 1, height: 6, borderRadius: 3, background: '#1c1c1c', overflow: 'hidden' }}>
+            <div key={i} style={{ flex: 1, height: 10, borderRadius: 5, background: '#1c1c1c', overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
                 width: filled ? '100%' : `${partialPct}%`,
                 background: color,
-                borderRadius: 3,
+                borderRadius: 5,
                 transition: 'width 0.3s ease-out',
               }} />
             </div>
