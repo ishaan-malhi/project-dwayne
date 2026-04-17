@@ -84,12 +84,20 @@ function PhotoCell({ week, currentWeek, hasPhoto, isMissed, photoUnlocked, onCap
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        {(hasPhoto || isMissed) && (
+        {hasPhoto && isLocked && (
+          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+        )}
+        {(hasPhoto && !isLocked || isMissed) && (
           <span style={{
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 10, fontWeight: 700, color, lineHeight: 1,
           }}>
-            {hasPhoto ? (isLocked ? '🔒' : '✓') : '✕'}
+            {hasPhoto ? '✓' : '✕'}
           </span>
         )}
       </div>
@@ -136,7 +144,9 @@ function WeekRow({ week, logs, todayStr, selectedCell, onSelect }: {
                   width: 6, height: 6, borderRadius: '50%',
                   background: log?.completed ? color : isPast ? `${color}30` : `${color}50`,
                 }} />
-                {log?.completed && <span style={{ fontSize: 6, color, lineHeight: 1 }}>✓</span>}
+                <span style={{ fontSize: 6, color: log?.completed ? color : isPast ? `${color}60` : `${color}80`, lineHeight: 1, fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>
+                  {log?.completed ? '✓' : ({ STRENGTH_A: 'S', STRENGTH_B: 'S', VO2: 'V', ZONE2: 'Z', SPEED: 'P' } as Record<string, string>)[dayType] ?? ''}
+                </span>
               </>
             ) : (
               <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#222' }} />
@@ -368,7 +378,12 @@ const Profile: FC = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Progress Photos</span>
-              {!photoUnlocked && <span style={{ fontSize: 10 }}>🔒</span>}
+              {!photoUnlocked && (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="Locked">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              )}
             </div>
             {!photoThisWeek && <span style={{ fontSize: 10, color: '#5ba3ff' }}>Tap W{currentWeek} to log</span>}
           </div>
@@ -395,9 +410,13 @@ const Profile: FC = () => {
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Program</span>
             <button
               onClick={() => setProgramExpanded(v => !v)}
-              style={{ fontSize: 10, color: '#6b6b6b', background: 'none', border: 'none', padding: 0, letterSpacing: '0.04em' }}
+              aria-expanded={programExpanded}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#999', background: 'none', border: 'none', padding: '6px 0', minHeight: 28, letterSpacing: '0.04em', cursor: 'pointer' }}
             >
-              {programExpanded ? 'Show less ↑' : 'All weeks ↓'}
+              {programExpanded ? 'Show less' : 'All weeks'}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.15s ease-out', transform: programExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </button>
           </div>
 
@@ -502,13 +521,16 @@ const Profile: FC = () => {
         <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, overflow: 'hidden' }}>
           <button
             onClick={() => setShowInventory(v => !v)}
+            aria-expanded={showInventory}
             style={{
               width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: 'transparent', border: 'none', color: '#f0f0f0',
+              background: 'transparent', border: 'none', cursor: 'pointer',
             }}
           >
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Exercise Inventory</span>
-            <span style={{ fontSize: 12, color: '#6b6b6b' }}>{showInventory ? '↑' : '↓'}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.15s ease-out', transform: showInventory ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
           </button>
 
           {showInventory && (

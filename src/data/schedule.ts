@@ -24,7 +24,7 @@ export const SESSION_SUBTITLES: Record<DayType, string> = {
   STRENGTH_A: 'Hinge + Pull',
   STRENGTH_B: 'Squat + Push',
   VO2: '4×4 Intervals',
-  ZONE2: '50 min bike',
+  ZONE2: 'Bike',
   SPEED: '1km Repeats',
   REST: 'Recovery',
 }

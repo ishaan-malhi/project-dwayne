@@ -15,7 +15,7 @@ const ProgressRing: FC<Props> = ({ daysLeft, totalDays }) => {
           strokeLinecap="round" transform="rotate(-90 26 26)" />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, fontWeight: 600, lineHeight: 1, color: '#f0f0f0' }}>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, lineHeight: 1, color: '#f0f0f0' }}>
           {Math.round(pct * 100)}%
         </span>
       </div>

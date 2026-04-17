@@ -89,6 +89,8 @@ const Today: FC = () => {
   const carbsLogged = Math.round((nutritionLog?.meals ?? []).reduce((s, m) => s + m.macros.carbs, 0))
   const fatLogged = Math.round((nutritionLog?.meals ?? []).reduce((s, m) => s + m.macros.fat, 0))
 
+  const showLogCTA = isTrainingDay && isTodayDate && !sessionLog?.completed && !sessionLog?.skipped
+
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Header */}
@@ -138,7 +140,8 @@ const Today: FC = () => {
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* Session card */}
-        <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8 }}>
+        <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, overflow: 'hidden' }}>
+          {/* Card header row */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div className="flex items-center gap-2">
               <span style={{
@@ -149,6 +152,8 @@ const Today: FC = () => {
               </span>
               <span style={{ fontSize: 12, color: '#6b6b6b' }}>{SESSION_SUBTITLES[dayType]}</span>
             </div>
+
+            {/* Status / secondary actions */}
             {sessionLog?.skipped ? (
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: 11, color: '#6b6b6b' }}>⊘ Skipped</span>
@@ -165,26 +170,26 @@ const Today: FC = () => {
                   Edit
                 </button>
               </div>
-            ) : dayType !== 'REST' && isTodayDate ? (
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowLog(true)}
-                  style={{ fontSize: 11, fontWeight: 600, color: '#f0f0f0', background: '#1c1c1c', border: '1px solid #333', borderRadius: 5, padding: '4px 10px' }}>
-                  Log
-                </button>
-                <button onClick={() => { setSkipReason(''); setShowSkip(true) }}
-                  aria-label="Skip session"
-                  style={{ color: '#6b6b6b', background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-                  </svg>
-                </button>
-              </div>
+            ) : isTrainingDay && isTodayDate ? (
+              <button
+                onClick={() => { setSkipReason(''); setShowSkip(true) }}
+                aria-label="Skip session"
+                style={{
+                  width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#6b6b6b', background: 'none', border: 'none', padding: 0, borderRadius: 4,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                </svg>
+              </button>
             ) : null}
           </div>
 
+          {/* Card body */}
           {dayType === 'REST' ? (
-            <div style={{ padding: '14px', textAlign: 'center', color: '#6b6b6b', fontSize: 13 }}>
+            <div style={{ padding: '14px', textAlign: 'center', color: '#999', fontSize: 13 }}>
               Rest day. Prioritise sleep and hit your protein.
             </div>
           ) : exercises.length > 0 ? (
@@ -221,8 +226,8 @@ const Today: FC = () => {
                 <span style={{ fontSize: 13, color: '#f0f0f0' }}>4×4 Intervals</span>
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: sessionColor }}>{VO2_PARAMS.duration}</span>
               </div>
-              <span style={{ fontSize: 11, color: '#6b6b6b' }}>4 min at 90–95% HR max · 3 min recovery</span>
-              {VO2_PARAMS.notes && <span style={{ fontSize: 11, color: '#6b6b6b' }}>{VO2_PARAMS.notes}</span>}
+              <span style={{ fontSize: 11, color: '#999' }}>4 min at 90–95% HR max · 3 min recovery</span>
+              {VO2_PARAMS.notes && <span style={{ fontSize: 11, color: '#999' }}>{VO2_PARAMS.notes}</span>}
             </div>
           ) : dayType === 'ZONE2' ? (
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -230,7 +235,7 @@ const Today: FC = () => {
                 <span style={{ fontSize: 13, color: '#f0f0f0' }}>Bike — {zone2Duration}</span>
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: sessionColor }}>135–145 bpm</span>
               </div>
-              <span style={{ fontSize: 11, color: '#6b6b6b' }}>Nasal breathing only. Fully conversational.</span>
+              <span style={{ fontSize: 11, color: '#999' }}>Nasal breathing only. Fully conversational.</span>
             </div>
           ) : dayType === 'SPEED' && speedTarget ? (
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -241,7 +246,7 @@ const Today: FC = () => {
                     <span style={{ fontSize: 10, background: '#ffaa4720', color: '#ffaa47', padding: '2px 6px', borderRadius: 4, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>MILESTONE</span>
                   </div>
                   <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, color: '#ffaa47' }}>Target: {speedTarget.pace}</span>
-                  <span style={{ fontSize: 11, color: '#6b6b6b' }}>6 weeks of work comes down to this.</span>
+                  <span style={{ fontSize: 11, color: '#999' }}>6 weeks of work comes down to this.</span>
                 </>
               ) : (
                 <>
@@ -249,15 +254,33 @@ const Today: FC = () => {
                     <span style={{ fontSize: 13, color: '#f0f0f0' }}>{typeof speedTarget.reps === 'number' ? `${speedTarget.reps}×1km` : speedTarget.reps}</span>
                     <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: sessionColor }}>{speedTarget.pace}</span>
                   </div>
-                  <span style={{ fontSize: 11, color: '#6b6b6b' }}>{speedTarget.rest} rest between reps</span>
+                  <span style={{ fontSize: 11, color: '#999' }}>{speedTarget.rest} rest between reps</span>
                 </>
               )}
             </div>
           ) : null}
 
           {location && (
-            <div style={{ padding: '6px 14px 10px' }}>
+            <div style={{ padding: '0 14px 10px' }}>
               <span style={{ fontSize: 10, color: '#6b6b6b' }}>📍 {location}</span>
+            </div>
+          )}
+
+          {/* Primary Log CTA — full width, session color */}
+          {showLogCTA && (
+            <div style={{ padding: '0 14px 14px' }}>
+              <button
+                onClick={() => setShowLog(true)}
+                aria-label={`Log ${SESSION_LABELS[dayType]} session`}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: 8,
+                  background: sessionColor, color: '#0a0a0a',
+                  fontSize: 13, fontWeight: 600, border: 'none',
+                  letterSpacing: '0.01em',
+                }}
+              >
+                Log session
+              </button>
             </div>
           )}
         </div>
@@ -272,9 +295,10 @@ const Today: FC = () => {
 
         {/* Macros — collapsed by default */}
         <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, padding: '12px 14px' }}>
-          <div
+          <button
             className="flex items-center justify-between"
-            style={{ cursor: 'pointer' }}
+            style={{ width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+            aria-expanded={showMacros}
             onClick={() => setShowMacros(v => !v)}
           >
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Macros</span>
@@ -282,9 +306,11 @@ const Today: FC = () => {
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#f0f0f0' }}>
                 {caloriesLogged}<span style={{ color: '#6b6b6b', fontSize: 11 }}> / {macroTarget.calories} kcal</span>
               </span>
-              <span style={{ fontSize: 12, color: '#6b6b6b' }}>{showMacros ? '↑' : '↓'}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.15s ease-out', transform: showMacros ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
-          </div>
+          </button>
           {showMacros && (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <MacroBar label="Protein" value={proteinLogged} target={macroTarget.protein} color="#5ba3ff" />
@@ -296,10 +322,17 @@ const Today: FC = () => {
 
         {/* Supplements */}
         <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, padding: '12px 14px' }}>
-          <div className="flex items-center justify-between" style={{ cursor: 'pointer' }} onClick={() => setShowSupplements(v => !v)}>
-            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Supplements</p>
-            <span style={{ fontSize: 12, color: '#6b6b6b' }}>{showSupplements ? '↑' : '↓'}</span>
-          </div>
+          <button
+            className="flex items-center justify-between"
+            style={{ width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+            aria-expanded={showSupplements}
+            onClick={() => setShowSupplements(v => !v)}
+          >
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b' }}>Supplements</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.15s ease-out', transform: showSupplements ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
           {showSupplements && (
             <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
@@ -309,6 +342,7 @@ const Today: FC = () => {
                     const checked = checkedSupplements.includes(s.name)
                     return (
                       <button key={s.name} onClick={() => isTodayDate && toggleSupplement(date, s.name)}
+                        aria-label={`${checked ? 'Uncheck' : 'Check'} ${s.name}`}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', padding: '2px 0', cursor: isTodayDate ? 'pointer' : 'default', width: '100%', textAlign: 'left' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0, border: checked ? 'none' : '1px solid #333', background: checked ? '#47ff8a' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -330,6 +364,7 @@ const Today: FC = () => {
                       const checked = checkedSupplements.includes(s.name)
                       return (
                         <button key={s.name} onClick={() => isTodayDate && toggleSupplement(date, s.name)}
+                          aria-label={`${checked ? 'Uncheck' : 'Check'} ${s.name}`}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', padding: '2px 0', cursor: isTodayDate ? 'pointer' : 'default', width: '100%', textAlign: 'left' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0, border: checked ? 'none' : '1px solid #333', background: checked ? '#47ff8a' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -351,7 +386,7 @@ const Today: FC = () => {
         {/* Tip */}
         <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: 8, padding: '12px 14px' }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 6 }}>Today's note</p>
-          <p style={{ fontSize: 12, color: '#6b6b6b', lineHeight: 1.6 }}>{tip}</p>
+          <p style={{ fontSize: 12, color: '#999', lineHeight: 1.6 }}>{tip}</p>
         </div>
 
       </div>
@@ -360,7 +395,7 @@ const Today: FC = () => {
 
       <Sheet open={showSkip} onClose={() => setShowSkip(false)} title="Skip Session">
         <div style={{ padding: '16px 16px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ fontSize: 13, color: '#6b6b6b' }}>Why are you skipping?</p>
+          <p style={{ fontSize: 13, color: '#999' }}>Why are you skipping?</p>
           <textarea value={skipReason} onChange={e => setSkipReason(e.target.value)}
             placeholder="Illness, travel, injury… (optional)" rows={3} autoFocus
             style={{ width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 13, padding: '8px 10px', resize: 'none', fontFamily: 'inherit' }} />

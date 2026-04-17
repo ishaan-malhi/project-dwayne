@@ -133,9 +133,9 @@ const Food: FC = () => {
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Protein', value: proteinLogged, target: macroTarget.protein, color: '#5ba3ff' },
-              { label: 'Carbs', value: carbsLogged, target: macroTarget.carbs, color: '#ffaa47' },
-              { label: 'Fat', value: fatLogged, target: macroTarget.fat, color: '#47ff8a' },
+              { label: 'Protein', value: proteinLogged, target: macroTarget.protein, color: proteinLogged > 0 ? '#5ba3ff' : '#333' },
+              { label: 'Carbs', value: carbsLogged, target: macroTarget.carbs, color: carbsLogged > 0 ? '#ffaa47' : '#333' },
+              { label: 'Fat', value: fatLogged, target: macroTarget.fat, color: fatLogged > 0 ? '#47ff8a' : '#333' },
             ].map(m => (
               <div key={m.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 18, color: m.color, fontWeight: 500 }}>{m.value}</div>
