@@ -154,7 +154,7 @@ const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
             type="time"
             value={timestamp}
             onChange={e => setTimestamp(e.target.value)}
-            style={{ background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 13, padding: '6px 10px' }}
+            style={{ background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 16, padding: '6px 10px' }}
           />
         </div>
 
@@ -190,7 +190,7 @@ const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
             rows={2}
             style={{
               width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5,
-              color: '#f0f0f0', fontSize: 13, padding: '8px 10px', resize: 'none', fontFamily: 'inherit',
+              color: '#f0f0f0', fontSize: 16, padding: '8px 10px', resize: 'none', fontFamily: 'inherit',
             }}
           />
         </div>

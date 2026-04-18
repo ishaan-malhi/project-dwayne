@@ -20,7 +20,7 @@ const EMOJI_OPTIONS: Array<{ value: EmojiPulse; emoji: string; label: string }> 
 
 const inp: CSSProperties = {
   background: '#1c1c1c', border: '1px solid #222', borderRadius: 5,
-  color: '#f0f0f0', fontSize: 13, padding: '6px 10px',
+  color: '#f0f0f0', fontSize: 16, padding: '6px 10px',
 }
 
 const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
@@ -254,7 +254,7 @@ const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
           value={notes} onChange={e => setNotes(e.target.value)}
           placeholder="Notes (optional)"
           rows={2}
-          style={{ width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 13, padding: '8px 10px', resize: 'none', fontFamily: 'inherit' }}
+          style={{ width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 16, padding: '8px 10px', resize: 'none', fontFamily: 'inherit' }}
         />
 
         <button
