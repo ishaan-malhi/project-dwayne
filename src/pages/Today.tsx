@@ -11,6 +11,7 @@ import { useSessionStore } from '../store/sessionStore'
 import { useNutritionStore } from '../store/nutritionStore'
 import SessionLogSheet from '../components/SessionLogSheet'
 import Sheet from '../components/Sheet'
+import WorkoutMode from '../components/WorkoutMode'
 import WaterCard from '../components/WaterCard'
 import ProgressRing from '../components/ProgressRing'
 
@@ -39,6 +40,7 @@ function MacroBar({ label, value, target, color }: { label: string; value: numbe
 const Today: FC = () => {
   const [date, setDate] = useState(today())
   const [showLog, setShowLog] = useState(false)
+  const [showWorkout, setShowWorkout] = useState(false)
   const [showMacros, setShowMacros] = useState(false)
   const [showSupplements, setShowSupplements] = useState(false)
   const [showSkip, setShowSkip] = useState(false)
@@ -91,6 +93,7 @@ const Today: FC = () => {
   const carbsLogged = Math.round((nutritionLog?.meals ?? []).reduce((s, m) => s + m.macros.carbs, 0))
   const fatLogged = Math.round((nutritionLog?.meals ?? []).reduce((s, m) => s + m.macros.fat, 0))
 
+  const isStrength = dayType === 'STRENGTH_A' || dayType === 'STRENGTH_B'
   const showLogCTA = isTrainingDay && isTodayDate && !sessionLog?.completed && !sessionLog?.skipped
 
   return (
@@ -275,17 +278,29 @@ const Today: FC = () => {
             </div>
           )}
 
-          {/* Primary Log CTA — full width, session color */}
+          {/* Primary CTAs */}
           {showLogCTA && (
-            <div style={{ padding: '0 14px 14px', borderTop: '1px solid #1c1c1c', paddingTop: 12 }}>
+            <div style={{ padding: '12px 14px 14px', borderTop: '1px solid #1c1c1c',
+              display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {isStrength && (
+                <button
+                  onClick={() => setShowWorkout(true)}
+                  aria-label="Start workout mode"
+                  style={{ width: '100%', padding: '12px', borderRadius: 8,
+                    background: '#5ba3ff', color: '#0a0a0a', fontSize: 13, fontWeight: 600, border: 'none' }}
+                >
+                  Start Workout
+                </button>
+              )}
               <button
                 onClick={() => setShowLog(true)}
                 aria-label={`Log ${SESSION_LABELS[dayType]} session`}
                 style={{
                   width: '100%', padding: '12px', borderRadius: 8,
-                  background: `${sessionColor}e6`, color: '#0a0a0a',
-                  fontSize: 13, fontWeight: 600, border: 'none',
-                  letterSpacing: '0.01em',
+                  background: isStrength ? 'transparent' : `${sessionColor}e6`,
+                  color: isStrength ? '#5ba3ff' : '#0a0a0a',
+                  border: isStrength ? '1px solid #5ba3ff' : 'none',
+                  fontSize: 13, fontWeight: 600,
                 }}
               >
                 Log session
@@ -408,6 +423,15 @@ const Today: FC = () => {
       </div>
 
       <SessionLogSheet open={showLog} onClose={() => setShowLog(false)} date={date} />
+      {isStrength && (
+        <WorkoutMode
+          open={showWorkout}
+          onClose={() => setShowWorkout(false)}
+          onLogSession={() => { setShowWorkout(false); setShowLog(true) }}
+          dayType={dayType as 'STRENGTH_A' | 'STRENGTH_B'}
+          date={date}
+        />
+      )}
 
       <Sheet open={showSkip} onClose={() => setShowSkip(false)} title="Skip Session">
         <div style={{ padding: '16px 16px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
