@@ -95,6 +95,7 @@ const Today: FC = () => {
 
   const isStrength = dayType === 'STRENGTH_A' || dayType === 'STRENGTH_B'
   const showLogCTA = isTrainingDay && isTodayDate && !sessionLog?.completed && !sessionLog?.skipped
+  const showWorkoutCTA = isStrength && !sessionLog?.completed && !sessionLog?.skipped
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -279,10 +280,10 @@ const Today: FC = () => {
           )}
 
           {/* Primary CTAs */}
-          {showLogCTA && (
+          {(showLogCTA || showWorkoutCTA) && (
             <div style={{ padding: '12px 14px 14px', borderTop: '1px solid #1c1c1c',
               display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {isStrength && (
+              {showWorkoutCTA && (
                 <button
                   onClick={() => setShowWorkout(true)}
                   aria-label="Start workout mode"
@@ -292,19 +293,21 @@ const Today: FC = () => {
                   Start Workout
                 </button>
               )}
-              <button
-                onClick={() => setShowLog(true)}
-                aria-label={`Log ${SESSION_LABELS[dayType]} session`}
-                style={{
-                  width: '100%', padding: '12px', borderRadius: 8,
-                  background: isStrength ? 'transparent' : `${sessionColor}e6`,
-                  color: isStrength ? '#5ba3ff' : '#0a0a0a',
-                  border: isStrength ? '1px solid #5ba3ff' : 'none',
-                  fontSize: 13, fontWeight: 600,
-                }}
-              >
-                Log session
-              </button>
+              {showLogCTA && (
+                <button
+                  onClick={() => setShowLog(true)}
+                  aria-label={`Log ${SESSION_LABELS[dayType]} session`}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 8,
+                    background: isStrength ? 'transparent' : `${sessionColor}e6`,
+                    color: isStrength ? '#5ba3ff' : '#0a0a0a',
+                    border: isStrength ? '1px solid #5ba3ff' : 'none',
+                    fontSize: 13, fontWeight: 600,
+                  }}
+                >
+                  Log session
+                </button>
+              )}
             </div>
           )}
         </div>
