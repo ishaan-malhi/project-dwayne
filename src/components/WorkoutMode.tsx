@@ -5,7 +5,7 @@ import { getLoadForPhase, getPhaseForDate } from '../utils/plan'
 type WorkoutPhase = 'active' | 'resting' | 'rest_done'
 
 const PRESETS = [60, 90, 120, 180]
-const RADIUS = 72
+const RADIUS = 90
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 interface Props {
@@ -118,7 +118,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
         <div style={{ textAlign: 'center', width: '100%' }}>
           <div style={{ fontSize: 56, color: '#47ff8a', lineHeight: 1, marginBottom: 16 }}>✓</div>
           <div style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0', marginBottom: 8 }}>Workout done</div>
-          <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 40 }}>Log your sets to save the session</div>
+          <div style={{ fontSize: 13, color: '#999', marginBottom: 40 }}>Log your sets to save the session</div>
           <button
             onClick={onLogSession}
             style={{ width: '100%', padding: 14, borderRadius: 8, background: '#f0f0f0',
@@ -129,7 +129,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
           <button
             onClick={onClose}
             style={{ width: '100%', padding: 14, borderRadius: 8, background: 'transparent',
-              color: '#6b6b6b', fontSize: 13, fontWeight: 500, border: 'none' }}
+              color: '#999', fontSize: 13, fontWeight: 500, border: 'none' }}
           >
             Close
           </button>
@@ -153,7 +153,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
           onClick={onClose}
           aria-label="Close workout"
           style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: '#141414', border: '1px solid #222', borderRadius: 8, color: '#6b6b6b' }}
+            background: '#141414', border: '1px solid #222', borderRadius: 8, color: '#999' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             strokeWidth="1.5" strokeLinecap="round">
@@ -161,10 +161,10 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
           </svg>
         </button>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
-          textTransform: 'uppercase', color: '#6b6b6b' }}>
+          textTransform: 'uppercase', color: '#999' }}>
           {dayLabel}
         </span>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6b6b6b',
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#999',
           minWidth: 40, textAlign: 'right' }}>
           {exIdx + 1} / {exercises.length}
         </span>
@@ -177,12 +177,12 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
             <div style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0', lineHeight: 1.25 }}>
               {ex.name}
             </div>
-            <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
               {getLoadForPhase(ex, phase)}
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6b6b6b' }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#999' }}>
               Set {setIdx + 1} / {ex.sets}
             </span>
           </div>
@@ -190,23 +190,23 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       </div>
 
       {/* Circular timer */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '36px 0', flexShrink: 0 }}>
-        <svg width={180} height={180} viewBox="0 0 180 180" aria-hidden="true">
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '28px 0', flexShrink: 0 }}>
+        <svg width={228} height={228} viewBox="0 0 228 228" aria-hidden="true">
           {/* Track */}
-          <circle cx="90" cy="90" r={RADIUS} fill="none" stroke="#1c1c1c" strokeWidth="6" />
+          <circle cx="114" cy="114" r={RADIUS} fill="none" stroke="#1c1c1c" strokeWidth="6" />
           {/* Progress arc */}
           <circle
-            cx="90" cy="90" r={RADIUS} fill="none"
+            cx="114" cy="114" r={RADIUS} fill="none"
             stroke={arcColor}
             strokeWidth="6"
             strokeLinecap="round"
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={dashOffset}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: '90px 90px', transition: arcTransition }}
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '114px 114px', transition: arcTransition }}
           />
           {/* Center label */}
           <text
-            x="90" y="90"
+            x="114" y="114"
             textAnchor="middle"
             dominantBaseline="central"
             style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: centerSize,
@@ -278,7 +278,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, flexShrink: 0 }}>
         <button
           onClick={skipExercise}
-          style={{ background: 'none', border: 'none', color: '#333', fontSize: 12, padding: '4px 8px' }}
+          style={{ background: 'none', border: 'none', color: '#6b6b6b', fontSize: 12, padding: '4px 8px' }}
         >
           Skip exercise
         </button>
