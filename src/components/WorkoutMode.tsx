@@ -70,6 +70,14 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
     setWorkoutPhase('active')
   }
 
+  function skipExercise() {
+    const isLastExercise = exIdx >= exercises.length - 1
+    if (isLastExercise) { setIsComplete(true); return }
+    setExIdx(i => i + 1)
+    setSetIdx(0)
+    setWorkoutPhase('active')
+  }
+
   function changePreset(duration: number) {
     setRestDuration(duration)
     if (workoutPhase === 'resting' || workoutPhase === 'rest_done') {
@@ -264,6 +272,16 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
             Next Set →
           </button>
         )}
+      </div>
+
+      {/* Skip exercise */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, flexShrink: 0 }}>
+        <button
+          onClick={skipExercise}
+          style={{ background: 'none', border: 'none', color: '#333', fontSize: 12, padding: '4px 8px' }}
+        >
+          Skip exercise
+        </button>
       </div>
 
       {/* Exercise progress dots */}
