@@ -217,9 +217,6 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
         </svg>
       </div>
 
-      {/* Spacer */}
-      <div style={{ flex: 1 }} />
-
       {/* Rest presets */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16, flexShrink: 0 }}>
         {PRESETS.map(p => {
