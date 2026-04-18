@@ -272,7 +272,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       </div>
 
       {/* Skip exercise */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16, marginBottom: 12, flexShrink: 0 }}>
         <button
           onClick={skipExercise}
           style={{ background: 'none', border: 'none', color: '#6b6b6b', fontSize: 12, padding: '4px 8px' }}
