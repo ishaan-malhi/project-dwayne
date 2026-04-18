@@ -413,7 +413,7 @@ const Today: FC = () => {
         <div style={{ padding: '16px 16px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <p style={{ fontSize: 13, color: '#999' }}>Why are you skipping?</p>
           <textarea value={skipReason} onChange={e => setSkipReason(e.target.value)}
-            placeholder="Illness, travel, injury… (optional)" rows={3} autoFocus
+            placeholder="Illness, travel, injury… (optional)" rows={3}
             style={{ width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 16, padding: '8px 10px', resize: 'none', fontFamily: 'inherit' }} />
           <button onClick={() => { skipSession(date, skipReason.trim()); setShowSkip(false) }}
             style={{ width: '100%', padding: '12px', borderRadius: 8, background: '#f0f0f0', color: '#0a0a0a', fontSize: 13, fontWeight: 600, border: 'none' }}>
