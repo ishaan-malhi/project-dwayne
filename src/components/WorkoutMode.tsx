@@ -118,7 +118,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
         <div style={{ textAlign: 'center', width: '100%' }}>
           <div style={{ fontSize: 56, color: '#47ff8a', lineHeight: 1, marginBottom: 16 }}>✓</div>
           <div style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0', marginBottom: 8 }}>Workout done</div>
-          <div style={{ fontSize: 13, color: '#999', marginBottom: 40 }}>Log your sets to save the session</div>
+          <div style={{ fontSize: 13, color: '#bbb', marginBottom: 40 }}>Log your sets to save the session</div>
           <button
             onClick={onLogSession}
             style={{ width: '100%', padding: 14, borderRadius: 8, background: '#f0f0f0',
@@ -161,10 +161,10 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
           </svg>
         </button>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
-          textTransform: 'uppercase', color: '#999' }}>
+          textTransform: 'uppercase', color: '#bbb' }}>
           {dayLabel}
         </span>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#999',
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#bbb',
           minWidth: 40, textAlign: 'right' }}>
           {exIdx + 1} / {exercises.length}
         </span>
@@ -177,12 +177,12 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
             <div style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0', lineHeight: 1.25 }}>
               {ex.name}
             </div>
-            <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: '#bbb', marginTop: 4 }}>
               {getLoadForPhase(ex, phase)}
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#999' }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#bbb' }}>
               Set {setIdx + 1} / {ex.sets}
             </span>
           </div>
