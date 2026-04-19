@@ -342,7 +342,16 @@ const Profile: FC = () => {
                 <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, color: latestWeight ? '#f0f0f0' : '#333' }}>
                   {latestWeight ? `${latestWeight}kg` : '—'}
                 </div>
-                {weightData.length >= 2 && (
+                {weightData.length > 0 ? (
+                  <div style={{ fontSize: 9, color: '#6b6b6b', marginTop: 2, letterSpacing: '0.04em' }}>
+                    {formatShortDate(weightData[weightData.length - 1].date)}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 9, color: '#333', marginTop: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    tap to track
+                  </div>
+                )}
+                {weightData.length >= 1 && (
                   <div style={{ marginTop: 6 }}>
                     <Sparkline data={weightData.slice(-6).map(e => e.weight)} color="#5ba3ff" height={14} />
                   </div>

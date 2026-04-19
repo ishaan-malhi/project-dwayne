@@ -1,6 +1,5 @@
 import { useState, type FC } from 'react'
 import { useNutritionStore } from '../store/nutritionStore'
-import { useSettingsStore } from '../store/settingsStore'
 import { useSessionStore } from '../store/sessionStore'
 import { MACRO_TARGETS, WATER_TARGET_ML } from '../data/nutrition'
 import { getDayType, today, getDaysRemaining, getTotalPlanDays } from '../utils/plan'
@@ -18,8 +17,6 @@ const CATEGORY_LABELS: Record<Category, string> = {
 
 const Food: FC = () => {
   const [showAdd, setShowAdd] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [apiKeyInput, setApiKeyInput] = useState('')
 
   const date = today()
   const dayType = getDayType(date)
@@ -31,7 +28,6 @@ const Food: FC = () => {
   const totalDays = getTotalPlanDays()
 
   const { getLog, removeMeal, updateWater, proteinTotal, caloriesTotal } = useNutritionStore()
-  const { claudeApiKey, setApiKey } = useSettingsStore()
 
   const log = getLog(date)
   const meals = log?.meals ?? []
@@ -48,11 +44,6 @@ const Food: FC = () => {
   const formatTime = (iso: string) => {
     const d = new Date(iso)
     return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const handleSaveKey = () => {
-    setApiKey(apiKeyInput)
-    setShowSettings(false)
   }
 
   // Group meals by category
@@ -73,12 +64,6 @@ const Food: FC = () => {
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: '#f0f0f0' }}>Food Diary</span>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => { setApiKeyInput(claudeApiKey); setShowSettings(true) }}
-            style={{ fontSize: 11, color: claudeApiKey ? '#47ff8a' : '#ff4747', background: 'none', border: 'none', padding: 0 }}
-          >
-            {claudeApiKey ? 'API ✓' : 'Set API key'}
-          </button>
           {streak > 0 && (
             <div className="flex items-center gap-1">
               <span style={{ fontSize: 13 }}>🔥</span>
@@ -94,30 +79,6 @@ const Food: FC = () => {
           <p style={{ fontSize: 12, color: '#ff4747' }}>
             Protein floor warning — you're at {proteinLogged}g, target is 160g. The deficit doesn't matter if protein is under.
           </p>
-        </div>
-      )}
-
-      {/* API key settings */}
-      {showSettings && (
-        <div style={{ margin: '12px 16px 0', padding: '12px 14px', background: '#141414', border: '1px solid #222', borderRadius: 8 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 8 }}>
-            Claude API Key
-          </p>
-          <input
-            type="password"
-            value={apiKeyInput}
-            onChange={e => setApiKeyInput(e.target.value)}
-            placeholder="sk-ant-..."
-            style={{ width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 13, padding: '8px 10px', marginBottom: 8 }}
-          />
-          <div className="flex gap-2">
-            <button onClick={() => setShowSettings(false)} style={{ flex: 1, padding: 8, borderRadius: 5, background: 'transparent', border: '1px solid #333', color: '#6b6b6b', fontSize: 12 }}>
-              Cancel
-            </button>
-            <button onClick={handleSaveKey} style={{ flex: 2, padding: 8, borderRadius: 5, background: '#f0f0f0', color: '#0a0a0a', fontSize: 12, fontWeight: 600, border: 'none' }}>
-              Save
-            </button>
-          </div>
         </div>
       )}
 

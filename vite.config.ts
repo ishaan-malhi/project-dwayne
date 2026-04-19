@@ -35,6 +35,9 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: { '/api': 'http://localhost:3000' },
+  },
   test: {
     environment: 'happy-dom',
     globals: true,
