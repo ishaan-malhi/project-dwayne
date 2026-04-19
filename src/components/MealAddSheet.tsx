@@ -25,7 +25,7 @@ interface Props {
 
 const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
   const { addMeal, proteinTotal, caloriesTotal } = useNutritionStore()
-  const { claudeApiKey } = useSettingsStore()
+  const { claudeApiKey, setApiKey } = useSettingsStore()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [category, setCategory] = useState<Category>('lunch')
@@ -37,6 +37,7 @@ const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
   const [score, setScore] = useState<MealScore | undefined>()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
+  const [apiKeyDraft, setApiKeyDraft] = useState('')
   const [timestamp, setTimestamp] = useState(() => {
     const now = new Date()
     return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
@@ -52,13 +53,23 @@ const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const mime = file.type as 'image/jpeg' | 'image/png' | 'image/webp'
-    setPhotoMimeType(mime)
+    setPhotoMimeType('image/jpeg')
     const reader = new FileReader()
     reader.onload = ev => {
-      const result = ev.target?.result as string
-      setPhotoPreview(result)
-      setPhotoBase64(result.split(',')[1])
+      const dataUrl = ev.target?.result as string
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 500
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        const resized = canvas.toDataURL('image/jpeg', 0.85)
+        setPhotoPreview(resized)
+        setPhotoBase64(resized.split(',')[1])
+      }
+      img.src = dataUrl
     }
     reader.readAsDataURL(file)
   }
@@ -112,6 +123,7 @@ const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
     setEstimate(undefined)
     setScore(undefined)
     setError(undefined)
+    setApiKeyDraft('')
     setCategory('lunch')
   }
 
@@ -202,8 +214,31 @@ const MealAddSheet: FC<Props> = ({ open, onClose, date }) => {
           </p>
         )}
 
+        {/* API key gate */}
+        {!claudeApiKey && !estimate && (
+          <div style={{ background: '#141414', border: '1px solid #222', borderRadius: 8, padding: '12px 14px' }}>
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 8 }}>
+              Claude API Key required
+            </p>
+            <input
+              type="password"
+              value={apiKeyDraft}
+              onChange={e => setApiKeyDraft(e.target.value)}
+              placeholder="sk-ant-api03-..."
+              style={{ width: '100%', background: '#1c1c1c', border: '1px solid #222', borderRadius: 5, color: '#f0f0f0', fontSize: 16, padding: '8px 10px', marginBottom: 8, fontFamily: 'inherit' }}
+            />
+            <button
+              onClick={() => { if (apiKeyDraft.trim()) setApiKey(apiKeyDraft.trim()) }}
+              disabled={!apiKeyDraft.trim()}
+              style={{ width: '100%', padding: 10, borderRadius: 6, background: apiKeyDraft.trim() ? '#f0f0f0' : '#1c1c1c', color: apiKeyDraft.trim() ? '#0a0a0a' : '#6b6b6b', fontSize: 13, fontWeight: 600, border: 'none' }}
+            >
+              Save key
+            </button>
+          </div>
+        )}
+
         {/* Estimate button */}
-        {!estimate && (
+        {claudeApiKey && !estimate && (
           <button
             onClick={handleEstimate}
             disabled={loading || (!description && !photoBase64)}
