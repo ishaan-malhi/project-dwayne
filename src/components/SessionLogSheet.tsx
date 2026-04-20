@@ -5,10 +5,13 @@ import { getDayType, getPhaseForDate, getLoadForPhase } from '../utils/plan'
 import { STRENGTH_A, STRENGTH_B, VO2_PARAMS, ZONE2_PARAMS } from '../data/sessions'
 import type { SetLog, EmojiPulse } from '../types'
 
+interface SummaryRow { load: string; reps: number; rpe: number }
+
 interface Props {
   open: boolean
   onClose: () => void
   date: string
+  prefillSets?: SetLog[]
 }
 
 const EMOJI_OPTIONS: Array<{ value: EmojiPulse; emoji: string; label: string }> = [
@@ -23,7 +26,7 @@ const inp: CSSProperties = {
   color: '#f0f0f0', fontSize: 16, padding: '6px 10px',
 }
 
-const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
+const SessionLogSheet: FC<Props> = ({ open, onClose, date, prefillSets }) => {
   const dayType = getDayType(date)
   const phase = getPhaseForDate(date)
   const { logSession, getLog } = useSessionStore()
@@ -32,7 +35,19 @@ const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
   const exercises = dayType === 'STRENGTH_A' ? STRENGTH_A : dayType === 'STRENGTH_B' ? STRENGTH_B : []
   const isCardio = dayType === 'VO2' || dayType === 'ZONE2' || dayType === 'SPEED'
 
-  const [sets, setSets] = useState<Record<string, SetLog[]>>(() =>
+  const [summaryRows, setSummaryRows] = useState<Record<string, SummaryRow>>(() =>
+    Object.fromEntries(exercises.map(ex => {
+      const prefill = prefillSets?.filter(s => s.exerciseName === ex.name)
+      const exExisting = existing?.sets?.filter(s => s.exerciseName === ex.name)
+      return [ex.name, {
+        load: prefill?.[0]?.actualLoad ?? exExisting?.[0]?.actualLoad ?? '',
+        reps: prefill?.[0]?.reps ?? exExisting?.[0]?.reps ?? 0,
+        rpe: exExisting?.[0]?.rpe ?? 0,
+      }]
+    }))
+  )
+  const [expandedEx, setExpandedEx] = useState<Set<string>>(new Set())
+  const [perSetData, setPerSetData] = useState<Record<string, SetLog[]>>(() =>
     Object.fromEntries(exercises.map(ex => [
       ex.name,
       existing?.sets?.filter(s => s.exerciseName === ex.name) ??
@@ -41,6 +56,7 @@ const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
       })),
     ]))
   )
+
   const [emojiPulse, setEmojiPulse] = useState<EmojiPulse | undefined>(existing?.emojiPulse)
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [cardioActual, setCardioActual] = useState<NonNullable<ReturnType<typeof getLog>>['cardioActual']>(
@@ -50,8 +66,16 @@ const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
   const cameraRef = useRef<HTMLInputElement>(null)
   const uploadRef = useRef<HTMLInputElement>(null)
 
-  const updateSet = (exName: string, idx: number, field: 'actualLoad' | 'reps', value: string) => {
-    setSets(prev => ({
+  const toggleExpand = (exName: string) => {
+    setExpandedEx(prev => {
+      const n = new Set(prev)
+      n.has(exName) ? n.delete(exName) : n.add(exName)
+      return n
+    })
+  }
+
+  const updatePerSet = (exName: string, idx: number, field: 'actualLoad' | 'reps', value: string) => {
+    setPerSetData(prev => ({
       ...prev,
       [exName]: prev[exName].map((s, i) =>
         i === idx ? { ...s, [field]: field === 'reps' ? Number(value) : value } : s
@@ -72,7 +96,21 @@ const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
   }
 
   const handleComplete = () => {
-    const allSets = Object.values(sets).flat()
+    const allSets: SetLog[] = exercises.flatMap(ex => {
+      if (expandedEx.has(ex.name)) {
+        return perSetData[ex.name].map(s => ({
+          ...s, rpe: summaryRows[ex.name]?.rpe || undefined,
+        }))
+      }
+      const row = summaryRows[ex.name]
+      return Array.from({ length: ex.sets }, (_, i) => ({
+        exerciseName: ex.name,
+        setIndex: i,
+        actualLoad: row.load,
+        reps: row.reps,
+        rpe: row.rpe || undefined,
+      }))
+    })
     logSession(date, {
       date,
       type: dayType,
@@ -91,34 +129,115 @@ const SessionLogSheet: FC<Props> = ({ open, onClose, date }) => {
     <Sheet open={open} onClose={onClose} title="Log Session">
       <div className="px-4 py-4 flex flex-col gap-5">
 
-        {/* STRENGTH: sets per exercise */}
-        {exercises.map(ex => (
-          <div key={ex.name}>
-            <div className="flex items-baseline justify-between mb-2">
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f0' }}>{ex.name}</p>
-              <span style={{ fontSize: 11, color: '#6b6b6b', fontFamily: 'JetBrains Mono, monospace' }}>
-                {getLoadForPhase(ex, phase)}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              {sets[ex.name]?.map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span style={{ fontSize: 11, color: '#6b6b6b', width: 20, textAlign: 'right' }}>{i + 1}</span>
-                  <input
-                    type="text" inputMode="decimal" placeholder="Load" value={s.actualLoad}
-                    onChange={e => updateSet(ex.name, i, 'actualLoad', e.target.value)}
-                    style={{ ...inp, flex: 1 }}
-                  />
-                  <input
-                    type="number" inputMode="numeric" placeholder="Reps" value={s.reps || ''}
-                    onChange={e => updateSet(ex.name, i, 'reps', e.target.value)}
-                    style={{ ...inp, width: 64, textAlign: 'center' }}
-                  />
+        {/* STRENGTH: summary rows with expand-to-per-set */}
+        {exercises.map(ex => {
+          const row = summaryRows[ex.name]
+          const isExpanded = expandedEx.has(ex.name)
+          return (
+            <div key={ex.name}>
+              {/* Exercise header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f0' }}>{ex.name}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: '#6b6b6b', fontFamily: 'JetBrains Mono, monospace' }}>
+                    {getLoadForPhase(ex, phase)}
+                  </span>
+                  <button
+                    onClick={() => toggleExpand(ex.name)}
+                    aria-label={isExpanded ? 'Collapse per-set' : 'Expand per-set'}
+                    style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'transparent', border: '1px solid #333', borderRadius: 5, color: '#6b6b6b', flexShrink: 0 }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2.5" strokeLinecap="round"
+                      style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease-out' }}>
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
                 </div>
-              ))}
+              </div>
+
+              {/* Summary row (default) */}
+              {!isExpanded && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto 1fr', gap: 6, alignItems: 'end' }}>
+                  <div>
+                    <p style={{ fontSize: 10, color: '#6b6b6b', marginBottom: 3 }}>Load</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input
+                        type="text" inputMode="decimal" placeholder="—"
+                        value={row.load}
+                        onChange={e => setSummaryRows(p => ({ ...p, [ex.name]: { ...p[ex.name], load: e.target.value } }))}
+                        style={{ ...inp, flex: 1, textAlign: 'center' }}
+                      />
+                      <span style={{ fontSize: 10, color: '#6b6b6b' }}>kg</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, color: '#6b6b6b', marginBottom: 3 }}>Reps</p>
+                    <input
+                      type="number" inputMode="numeric" placeholder="—"
+                      value={row.reps || ''}
+                      onChange={e => setSummaryRows(p => ({ ...p, [ex.name]: { ...p[ex.name], reps: Number(e.target.value) } }))}
+                      style={{ ...inp, width: '100%', textAlign: 'center' }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'center', paddingBottom: 1 }}>
+                    <p style={{ fontSize: 10, color: '#6b6b6b', marginBottom: 3 }}>Sets</p>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, color: '#f0f0f0',
+                      display: 'block', padding: '6px 8px' }}>
+                      {ex.sets}
+                    </span>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, color: '#6b6b6b', marginBottom: 3 }}>RPE</p>
+                    <input
+                      type="number" inputMode="numeric" placeholder="—" min="1" max="10"
+                      value={row.rpe || ''}
+                      onChange={e => setSummaryRows(p => ({ ...p, [ex.name]: { ...p[ex.name], rpe: Number(e.target.value) } }))}
+                      style={{ ...inp, width: '100%', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Expanded per-set rows */}
+              {isExpanded && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {perSetData[ex.name]?.map((s, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '20px 1fr 72px', gap: 6, alignItems: 'center' }}>
+                      <span style={{ fontSize: 11, color: '#6b6b6b', textAlign: 'right' }}>{i + 1}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input
+                          type="text" inputMode="decimal" placeholder="Load"
+                          value={s.actualLoad}
+                          onChange={e => updatePerSet(ex.name, i, 'actualLoad', e.target.value)}
+                          style={{ ...inp, flex: 1 }}
+                        />
+                        <span style={{ fontSize: 10, color: '#6b6b6b' }}>kg</span>
+                      </div>
+                      <input
+                        type="number" inputMode="numeric" placeholder="Reps"
+                        value={s.reps || ''}
+                        onChange={e => updatePerSet(ex.name, i, 'reps', e.target.value)}
+                        style={{ ...inp, width: '100%', textAlign: 'center' }}
+                      />
+                    </div>
+                  ))}
+                  {/* RPE row when expanded */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <span style={{ fontSize: 10, color: '#6b6b6b', minWidth: 28 }}>RPE</span>
+                    <input
+                      type="number" inputMode="numeric" placeholder="1–10" min="1" max="10"
+                      value={summaryRows[ex.name]?.rpe || ''}
+                      onChange={e => setSummaryRows(p => ({ ...p, [ex.name]: { ...p[ex.name], rpe: Number(e.target.value) } }))}
+                      style={{ ...inp, width: 80, textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* CARDIO: contextual inputs + photo */}
         {isCardio && (

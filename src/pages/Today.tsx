@@ -41,6 +41,7 @@ const Today: FC = () => {
   const [date, setDate] = useState(today())
   const [showLog, setShowLog] = useState(false)
   const [showWorkout, setShowWorkout] = useState(false)
+  const [prefillSets, setPrefillSets] = useState<import('../types').SetLog[] | undefined>()
   const [showMacros, setShowMacros] = useState(false)
   const [showSupplements, setShowSupplements] = useState(false)
   const [showSkip, setShowSkip] = useState(false)
@@ -172,7 +173,7 @@ const Today: FC = () => {
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: 11, color: '#47ff8a' }}>✓ Done</span>
                 <button onClick={() => setShowLog(true)}
-                  style={{ fontSize: 11, color: '#6b6b6b', background: 'none', border: 'none', padding: 0 }}>
+                  style={{ fontSize: 11, color: '#6b6b6b', background: 'none', border: 'none', padding: '4px 8px' }}>
                   Edit
                 </button>
               </div>
@@ -425,12 +426,12 @@ const Today: FC = () => {
 
       </div>
 
-      <SessionLogSheet open={showLog} onClose={() => setShowLog(false)} date={date} />
+      <SessionLogSheet open={showLog} onClose={() => { setShowLog(false); setPrefillSets(undefined) }} date={date} prefillSets={prefillSets} />
       {isStrength && (
         <WorkoutMode
           open={showWorkout}
           onClose={() => setShowWorkout(false)}
-          onLogSession={() => { setShowWorkout(false); setShowLog(true) }}
+          onLogSession={(sets) => { setPrefillSets(sets); setShowWorkout(false); setShowLog(true) }}
           dayType={dayType as 'STRENGTH_A' | 'STRENGTH_B'}
           date={date}
         />

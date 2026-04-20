@@ -1,6 +1,7 @@
 import { type FC, useState, useEffect } from 'react'
 import { STRENGTH_A, STRENGTH_B } from '../data/sessions'
 import { getLoadForPhase, getPhaseForDate } from '../utils/plan'
+import type { SetLog } from '../types'
 
 type WorkoutPhase = 'active' | 'resting' | 'rest_done'
 
@@ -11,7 +12,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 interface Props {
   open: boolean
   onClose: () => void
-  onLogSession: () => void
+  onLogSession: (sets: SetLog[]) => void
   dayType: 'STRENGTH_A' | 'STRENGTH_B'
   date: string
 }
@@ -26,6 +27,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
   const [restDuration, setRestDuration] = useState(90)
   const [timeLeft, setTimeLeft] = useState(90)
   const [isComplete, setIsComplete] = useState(false)
+  const [loadInputs, setLoadInputs] = useState<Record<string, string>>({})
 
   // Reset on close
   useEffect(() => {
@@ -34,6 +36,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       setWorkoutPhase('active')
       setRestDuration(90); setTimeLeft(90)
       setIsComplete(false)
+      setLoadInputs({})
     }
   }, [open])
 
@@ -86,14 +89,22 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
     }
   }
 
+  function buildCollectedSets(): SetLog[] {
+    return exercises.flatMap((e, ei) =>
+      Array.from({ length: e.sets }, (_, si) => ({
+        exerciseName: e.name,
+        setIndex: si,
+        actualLoad: loadInputs[`${ei}-${si}`] ?? '',
+        reps: 0,
+      }))
+    )
+  }
+
   // SVG arc
-  // active:    full blue circle, center shows preset duration (dimmed)
-  // resting:   depleting blue arc, center shows countdown
-  // rest_done: full green circle, center shows ✓
   const dashOffset =
     workoutPhase === 'active' ? 0
     : workoutPhase === 'resting' ? CIRCUMFERENCE * (1 - timeLeft / restDuration)
-    : 0 // rest_done: full green
+    : 0
 
   const arcColor = workoutPhase === 'rest_done' ? '#47ff8a' : '#5ba3ff'
   const centerText = workoutPhase === 'active' ? `${restDuration}s` : workoutPhase === 'resting' ? String(timeLeft) : '✓'
@@ -120,7 +131,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
           <div style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0', marginBottom: 8 }}>Workout done</div>
           <div style={{ fontSize: 13, color: '#bbb', marginBottom: 40 }}>Log your sets to save the session</div>
           <button
-            onClick={onLogSession}
+            onClick={() => onLogSession(buildCollectedSets())}
             style={{ width: '100%', padding: 14, borderRadius: 8, background: '#f0f0f0',
               color: '#0a0a0a', fontSize: 13, fontWeight: 600, border: 'none', marginBottom: 12 }}
           >
@@ -148,7 +159,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 16, paddingBottom: 8, flexShrink: 0 }}>
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: 8, flexShrink: 0 }}>
         <button
           onClick={onClose}
           aria-label="Close workout"
@@ -171,7 +182,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       </div>
 
       {/* Exercise block */}
-      <div style={{ marginTop: 32, flexShrink: 0 }}>
+      <div style={{ marginTop: 24, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div style={{ flex: 1, minWidth: 0, marginRight: 16 }}>
             <div style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0', lineHeight: 1.25 }}>
@@ -187,10 +198,28 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
             </span>
           </div>
         </div>
+
+        {/* Load input — active phase only */}
+        {workoutPhase === 'active' && (
+          <div style={{ marginTop: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="Load"
+                value={loadInputs[`${exIdx}-${setIdx}`] ?? ''}
+                onChange={e => setLoadInputs(prev => ({ ...prev, [`${exIdx}-${setIdx}`]: e.target.value }))}
+                style={{ flex: 1, background: '#1c1c1c', border: '1px solid #222', borderRadius: 5,
+                  color: '#f0f0f0', fontSize: 16, padding: '10px 12px' }}
+              />
+              <span style={{ fontSize: 12, color: '#6b6b6b', minWidth: 24 }}>kg</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Circular timer */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '28px 0', flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '20px 0', flexShrink: 0 }}>
         <svg width={228} height={228} viewBox="0 0 228 228" aria-hidden="true">
           {/* Track */}
           <circle cx="114" cy="114" r={RADIUS} fill="none" stroke="#1c1c1c" strokeWidth="6" />
@@ -240,7 +269,7 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       </div>
 
       {/* Primary CTA */}
-      <div style={{ marginBottom: 24, flexShrink: 0 }}>
+      <div style={{ marginBottom: 16, flexShrink: 0 }}>
         {workoutPhase === 'active' && (
           <button
             onClick={startRest}
@@ -272,17 +301,17 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
       </div>
 
       {/* Skip exercise */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16, marginBottom: 12, flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, flexShrink: 0 }}>
         <button
           onClick={skipExercise}
-          style={{ background: 'none', border: 'none', color: '#6b6b6b', fontSize: 12, padding: '4px 8px' }}
+          style={{ background: 'none', border: 'none', color: '#6b6b6b', fontSize: 12, padding: '10px 16px' }}
         >
           Skip exercise
         </button>
       </div>
 
       {/* Exercise progress dots */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 32, flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 24, flexShrink: 0 }}>
         {exercises.map((_, i) => (
           <div
             key={i}
