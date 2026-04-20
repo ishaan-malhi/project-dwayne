@@ -280,7 +280,7 @@ const Profile: FC = () => {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Header */}
-      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#999' }}>
             Phase {currentPhase} · Week {currentWeek}

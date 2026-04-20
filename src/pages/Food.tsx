@@ -61,7 +61,7 @@ const Food: FC = () => {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Header */}
-      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: '#f0f0f0' }}>Food Diary</span>
         <div className="flex items-center gap-3">
           {streak > 0 && (
