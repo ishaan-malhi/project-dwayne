@@ -29,8 +29,8 @@ const baseProps = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  // Stub history API
   window.history.pushState = vi.fn()
+  window.history.back = vi.fn()
 })
 
 describe('WorkoutMode — visibility', () => {
@@ -61,6 +61,15 @@ describe('WorkoutMode — back button', () => {
     render(<WorkoutMode {...baseProps} />)
     fireEvent(window, new PopStateEvent('popstate'))
     expect(baseProps.onClose).toHaveBeenCalledOnce()
+  })
+
+  it('closing via UI button calls history.back to pop pushed state', () => {
+    const { rerender } = render(<WorkoutMode {...baseProps} />)
+    // Simulate history state being set by our pushState
+    Object.defineProperty(window.history, 'state', { value: { workoutMode: true }, configurable: true })
+    // Close via prop change (UI close path)
+    rerender(<WorkoutMode {...baseProps} open={false} />)
+    expect(window.history.back).toHaveBeenCalledOnce()
   })
 })
 

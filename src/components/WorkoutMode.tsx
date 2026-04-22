@@ -33,13 +33,25 @@ const WorkoutMode: FC<Props> = ({ open, onClose, onLogSession, dayType, date }) 
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  // History API — lets iOS back gesture / Android back button close the modal
+  // History API — lets iOS back gesture / Android back button close the modal.
+  // When the modal is closed via the UI button (not popstate), we call history.back()
+  // to pop the entry we pushed, preventing it from lingering in the forward stack
+  // and blocking the › date navigation button.
   useEffect(() => {
     if (!open) return
     window.history.pushState({ workoutMode: true }, '')
-    const handlePop = () => onCloseRef.current()
+    let closedByPop = false
+    const handlePop = () => {
+      closedByPop = true
+      onCloseRef.current()
+    }
     window.addEventListener('popstate', handlePop)
-    return () => window.removeEventListener('popstate', handlePop)
+    return () => {
+      window.removeEventListener('popstate', handlePop)
+      if (!closedByPop && window.history.state?.workoutMode) {
+        window.history.back()
+      }
+    }
   }, [open])
 
   // Reset on close
