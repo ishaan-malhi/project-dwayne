@@ -107,7 +107,7 @@ const Today: FC = () => {
             <button
               onClick={() => setDate(d => addDays(d, -1))}
               aria-label="Previous day"
-              style={{ width: 40, height: 40, borderRadius: 8, background: '#1c1c1c', border: '1px solid #222', color: '#6b6b6b', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 40, height: 40, borderRadius: 8, background: '#1c1c1c', border: '1px solid #222', color: '#6b6b6b', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation' }}
             >‹</button>
             <span style={{ fontSize: 15, fontWeight: 600, color: '#f0f0f0', minWidth: 100, textAlign: 'center' }}>
               {formatDate(date)}
@@ -115,7 +115,7 @@ const Today: FC = () => {
             <button
               onClick={() => setDate(d => addDays(d, 1))}
               aria-label="Next day"
-              style={{ width: 40, height: 40, borderRadius: 8, background: '#1c1c1c', border: '1px solid #222', color: '#6b6b6b', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 40, height: 40, borderRadius: 8, background: '#1c1c1c', border: '1px solid #222', color: '#6b6b6b', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation' }}
             >›</button>
           </div>
           <div className="flex items-center gap-3">
