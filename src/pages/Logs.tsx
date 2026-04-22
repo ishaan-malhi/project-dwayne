@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react'
+import { useState, useRef, useEffect, type FC } from 'react'
 import { useSessionStore } from '../store/sessionStore'
 import { useProgressStore } from '../store/progressStore'
 import { getDayType, getWeekForDate, formatShortDate, addDays, today, isWeek6TimeTrialDay, formatTime } from '../utils/plan'
@@ -13,7 +13,11 @@ const SESSION_COLORS: Record<string, string> = {
 const EMOJI_MAP: Record<number, string> = { 1: '😴', 2: '😐', 3: '💪', 4: '🔥' }
 
 const Logs: FC = () => {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(today())
+  const stripRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (stripRef.current) stripRef.current.scrollLeft = stripRef.current.scrollWidth
+  }, [])
   const [showWeighIn, setShowWeighIn] = useState(false)
   const [showFiveKm, setShowFiveKm] = useState(false)
   const [weightInput, setWeightInput] = useState('')
@@ -64,7 +68,7 @@ const Logs: FC = () => {
         {/* Calendar strip */}
         <div>
           <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 8 }}>Sessions</p>
-          <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4 }}>
+          <div ref={stripRef} style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4 }}>
             {days.map(d => {
               const log = logs[d]
               const dt = getDayType(d)
