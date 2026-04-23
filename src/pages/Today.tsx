@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type FC } from 'react'
 import { getDayType, getDayLocation, getPhaseForDate, getLoadForPhase, getSpeedTarget,
   getZone2Duration, getWeekForDate, getDaysRemaining, getTotalPlanDays, getTipForDate,
-  formatDate, addDays, today, isWeek6TimeTrialDay } from '../utils/plan'
+  formatDate, formatShortDate, addDays, today, isWeek6TimeTrialDay } from '../utils/plan'
 import { PHASES } from '../data/phases'
 import { STRENGTH_A, STRENGTH_B, VO2_PARAMS } from '../data/sessions'
 import { MACRO_TARGETS, WATER_TARGET_ML } from '../data/nutrition'
@@ -166,7 +166,7 @@ const Today: FC = () => {
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* Session card */}
-        <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ background: '#141414', border: `1px solid ${bumpSource ? '#ffaa4740' : '#1c1c1c'}`, borderRadius: 8, overflow: 'hidden' }}>
           {/* Card header row */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div className="flex items-center gap-2">
@@ -177,13 +177,6 @@ const Today: FC = () => {
                 {SESSION_LABELS[dayType]}
               </span>
               <span style={{ fontSize: 12, color: '#6b6b6b' }}>{SESSION_SUBTITLES[dayType]}</span>
-              {bumpSource && (
-                <span style={{ fontSize: 9, color: '#ffaa47', background: '#ffaa4718',
-                  padding: '2px 6px', borderRadius: 4, fontWeight: 700,
-                  letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  MOVED
-                </span>
-              )}
             </div>
 
             {/* Status / secondary actions */}
@@ -211,7 +204,7 @@ const Today: FC = () => {
                 aria-label="Skip session"
                 style={{
                   width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#6b6b6b', background: 'none', border: 'none', padding: 0, borderRadius: 4,
+                  color: '#6b6b6b', background: 'transparent', border: '1px solid #2e2e2e', padding: 0, borderRadius: 4,
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -221,6 +214,19 @@ const Today: FC = () => {
               </button>
             ) : null}
           </div>
+
+          {/* Moved-from banner */}
+          {bumpSource && (
+            <div style={{ padding: '8px 14px', background: '#ffaa4712', borderBottom: '1px solid #ffaa4725',
+              display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffaa47" strokeWidth="2" strokeLinecap="round">
+                <polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+              </svg>
+              <span style={{ fontSize: 11, color: '#ffaa47' }}>
+                Moved from {formatShortDate(bumpSource.date)}
+              </span>
+            </div>
+          )}
 
           {/* Card body */}
           {dayType === 'REST' ? (
