@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react'
+import { useState, useRef, useEffect, type FC } from 'react'
 import { getDayType, getDayLocation, getPhaseForDate, getLoadForPhase, getSpeedTarget,
   getZone2Duration, getWeekForDate, getDaysRemaining, getTotalPlanDays, getTipForDate,
   formatDate, addDays, today, isWeek6TimeTrialDay } from '../utils/plan'
@@ -39,6 +39,11 @@ function MacroBar({ label, value, target, color }: { label: string; value: numbe
 
 const Today: FC = () => {
   const [date, setDate] = useState(today())
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Reset scroll to top whenever the date changes so the header is never off-screen
+  useEffect(() => { scrollRef.current?.scrollTo(0, 0) }, [date])
+
   const [showLog, setShowLog] = useState(false)
   const [showWorkout, setShowWorkout] = useState(false)
   const [prefillSets, setPrefillSets] = useState<import('../types').SetLog[] | undefined>()
@@ -99,7 +104,7 @@ const Today: FC = () => {
   const showWorkoutCTA = isStrength && !sessionLog?.completed && !sessionLog?.skipped
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
       {/* Header */}
       <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c' }}>
         <div className="flex items-center justify-between">
@@ -427,9 +432,9 @@ const Today: FC = () => {
       </div>
 
       <SessionLogSheet open={showLog} onClose={() => { setShowLog(false); setPrefillSets(undefined) }} date={date} prefillSets={prefillSets} />
-      {isStrength && (
+      {isStrength && showWorkout && (
         <WorkoutMode
-          open={showWorkout}
+          open={true}
           onClose={() => setShowWorkout(false)}
           onLogSession={(sets) => { setPrefillSets(sets); setShowWorkout(false); setShowLog(true) }}
           dayType={dayType as 'STRENGTH_A' | 'STRENGTH_B'}
