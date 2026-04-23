@@ -16,6 +16,7 @@ interface SessionState {
   }) => void
   skipSession: (date: string, reason: string) => void
   unskipSession: (date: string) => void
+  bumpSession: (fromDate: string, toDate: string) => void
   getLog: (date: string) => SessionLog | undefined
   getStreak: () => number
 }
@@ -71,6 +72,22 @@ export const useSessionStore = create<SessionState>()(
         })
       },
 
+      bumpSession: (fromDate, toDate) => {
+        set(state => ({
+          logs: {
+            ...state.logs,
+            [fromDate]: {
+              date: fromDate,
+              type: getDayType(fromDate),
+              sets: state.logs[fromDate]?.sets ?? [],
+              notes: state.logs[fromDate]?.notes ?? '',
+              completed: false,
+              bumpedTo: toDate,
+            },
+          },
+        }))
+      },
+
       unskipSession: (date) => {
         set(state => {
           const existing = state.logs[date]
@@ -96,8 +113,8 @@ export const useSessionStore = create<SessionState>()(
 
         while (daysChecked < 60) {
           daysChecked++
-          if (!isTraining(cursor)) {
-            // REST day — skip without breaking the streak
+          if (!isTraining(cursor) || logs[cursor]?.bumpedTo) {
+            // REST day or bumped-away day — skip without breaking the streak
             cursor = addDays(cursor, -1)
             continue
           }

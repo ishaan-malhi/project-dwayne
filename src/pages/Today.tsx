@@ -52,11 +52,10 @@ const Today: FC = () => {
   const [showSkip, setShowSkip] = useState(false)
   const [skipReason, setSkipReason] = useState('')
 
-  const dayType = getDayType(date)
+  const scheduledDayType = getDayType(date)
   const phase = getPhaseForDate(date)
   const week = getWeekForDate(date)
   const location = getDayLocation(date)
-  const sessionColor = SESSION_COLORS[dayType]
   const phaseInfo = PHASES.find(p => p.phase === phase)
   const daysLeft = getDaysRemaining()
   const totalDays = getTotalPlanDays()
@@ -65,7 +64,9 @@ const Today: FC = () => {
 
   const sessionLog = useSessionStore(s => s.getLog(date))
   const streak = useSessionStore(s => s.getStreak())
-  const { skipSession, unskipSession } = useSessionStore()
+  const allLogs = useSessionStore(s => s.logs)
+  const { skipSession, unskipSession, bumpSession } = useSessionStore()
+  const tomorrowLog = useSessionStore(s => s.getLog(addDays(date, 1)))
   const nutritionLog = useNutritionStore(s => s.getLog(date))
   const proteinLogged = useNutritionStore(s => s.proteinTotal(date))
   const caloriesLogged = useNutritionStore(s => s.caloriesTotal(date))
@@ -73,6 +74,11 @@ const Today: FC = () => {
   const toggleSupplement = useNutritionStore(s => s.toggleSupplement)
   const checkedSupplements = nutritionLog?.checkedSupplements ?? []
 
+  // Resolve incoming bump — a workout from another day moved to this date
+  const bumpSource = Object.values(allLogs).find(l => l.bumpedTo === date)
+  const dayType = (bumpSource?.type ?? scheduledDayType) as import('../types').DayType
+
+  const sessionColor = SESSION_COLORS[dayType]
   const macroTarget = MACRO_TARGETS[dayType]
   const waterTarget = WATER_TARGET_ML[dayType]
   const waterLogged = nutritionLog?.water ?? 0
@@ -100,8 +106,16 @@ const Today: FC = () => {
   const fatLogged = Math.round((nutritionLog?.meals ?? []).reduce((s, m) => s + m.macros.fat, 0))
 
   const isStrength = dayType === 'STRENGTH_A' || dayType === 'STRENGTH_B'
-  const showLogCTA = isTrainingDay && isTodayDate && !sessionLog?.completed && !sessionLog?.skipped
-  const showWorkoutCTA = isStrength && !sessionLog?.completed && !sessionLog?.skipped
+  const showLogCTA = isTrainingDay && isTodayDate && !sessionLog?.completed && !sessionLog?.skipped && !sessionLog?.bumpedTo
+  const showWorkoutCTA = isStrength && !sessionLog?.completed && !sessionLog?.skipped && !sessionLog?.bumpedTo
+  const showBumpCTA =
+    isTrainingDay &&
+    isTodayDate &&
+    hour >= 19 &&
+    !sessionLog?.completed &&
+    !sessionLog?.bumpedTo &&
+    !sessionLog?.skipped &&
+    !tomorrowLog?.completed
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
@@ -163,10 +177,19 @@ const Today: FC = () => {
                 {SESSION_LABELS[dayType]}
               </span>
               <span style={{ fontSize: 12, color: '#6b6b6b' }}>{SESSION_SUBTITLES[dayType]}</span>
+              {bumpSource && (
+                <span style={{ fontSize: 9, color: '#ffaa47', background: '#ffaa4718',
+                  padding: '2px 6px', borderRadius: 4, fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  MOVED
+                </span>
+              )}
             </div>
 
             {/* Status / secondary actions */}
-            {sessionLog?.skipped ? (
+            {sessionLog?.bumpedTo ? (
+              <span style={{ fontSize: 11, color: '#6b6b6b' }}>→ {formatDate(sessionLog.bumpedTo)}</span>
+            ) : sessionLog?.skipped ? (
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: 11, color: '#6b6b6b' }}>⊘ Skipped</span>
                 <button onClick={() => unskipSession(date)}
@@ -286,7 +309,7 @@ const Today: FC = () => {
           )}
 
           {/* Primary CTAs */}
-          {(showLogCTA || showWorkoutCTA) && (
+          {(showLogCTA || showWorkoutCTA || showBumpCTA) && (
             <div style={{ padding: '12px 14px 14px', borderTop: '1px solid #1c1c1c',
               display: 'flex', flexDirection: 'column', gap: 8 }}>
               {showWorkoutCTA && (
@@ -312,6 +335,17 @@ const Today: FC = () => {
                   }}
                 >
                   Log session
+                </button>
+              )}
+              {showBumpCTA && (
+                <button
+                  onClick={() => bumpSession(date, addDays(date, 1))}
+                  aria-label="Move workout to tomorrow"
+                  style={{ width: '100%', padding: '10px', borderRadius: 8,
+                    background: 'transparent', border: '1px solid #2e2e2e',
+                    color: '#999', fontSize: 12, fontWeight: 500 }}
+                >
+                  Move to tomorrow
                 </button>
               )}
             </div>
@@ -431,7 +465,13 @@ const Today: FC = () => {
 
       </div>
 
-      <SessionLogSheet open={showLog} onClose={() => { setShowLog(false); setPrefillSets(undefined) }} date={date} prefillSets={prefillSets} />
+      <SessionLogSheet
+        open={showLog}
+        onClose={() => { setShowLog(false); setPrefillSets(undefined) }}
+        date={date}
+        prefillSets={prefillSets}
+        dayTypeOverride={bumpSource ? dayType : undefined}
+      />
       {isStrength && showWorkout && (
         <WorkoutMode
           open={true}

@@ -67,6 +67,7 @@ export interface SessionLog {
   completed: boolean
   skipped?: boolean
   skipReason?: string
+  bumpedTo?: string
   emojiPulse?: EmojiPulse
   rpe?: number
   sleepHours?: number

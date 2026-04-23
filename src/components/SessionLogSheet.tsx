@@ -3,7 +3,7 @@ import Sheet from './Sheet'
 import { useSessionStore } from '../store/sessionStore'
 import { getDayType, getPhaseForDate, getLoadForPhase } from '../utils/plan'
 import { STRENGTH_A, STRENGTH_B, VO2_PARAMS, ZONE2_PARAMS } from '../data/sessions'
-import type { SetLog, EmojiPulse } from '../types'
+import type { SetLog, EmojiPulse, DayType } from '../types'
 
 interface SummaryRow { load: string; reps: number; rpe: number }
 
@@ -12,6 +12,7 @@ interface Props {
   onClose: () => void
   date: string
   prefillSets?: SetLog[]
+  dayTypeOverride?: DayType
 }
 
 const EMOJI_OPTIONS: Array<{ value: EmojiPulse; emoji: string; label: string }> = [
@@ -26,8 +27,8 @@ const inp: CSSProperties = {
   color: '#f0f0f0', fontSize: 16, padding: '6px 10px',
 }
 
-const SessionLogSheet: FC<Props> = ({ open, onClose, date, prefillSets }) => {
-  const dayType = getDayType(date)
+const SessionLogSheet: FC<Props> = ({ open, onClose, date, prefillSets, dayTypeOverride }) => {
+  const dayType = dayTypeOverride ?? getDayType(date)
   const phase = getPhaseForDate(date)
   const { logSession, getLog } = useSessionStore()
   const existing = getLog(date)
