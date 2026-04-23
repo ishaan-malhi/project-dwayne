@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { SessionLog, SetLog, EmojiPulse } from '../types'
-import { today, addDays } from '../utils/plan'
+import { today, addDays, getDayType } from '../utils/plan'
 
 interface SessionState {
   logs: Record<string, SessionLog>
@@ -84,25 +84,48 @@ export const useSessionStore = create<SessionState>()(
 
       getStreak: () => {
         const { logs } = get()
+        const isTraining = (d: string) => getDayType(d) !== 'REST'
         let streak = 0
         let cursor = today()
-        // Start from yesterday if today not yet completed
-        if (!logs[cursor]?.completed) {
+        let daysChecked = 0
+
+        // If today is a training day that hasn't been logged yet, start from yesterday
+        if (isTraining(cursor) && !logs[cursor]?.completed) {
           cursor = addDays(cursor, -1)
         }
-        while (true) {
-          const log = logs[cursor]
-          if (log?.completed) {
+
+        while (daysChecked < 60) {
+          daysChecked++
+          if (!isTraining(cursor)) {
+            // REST day — skip without breaking the streak
+            cursor = addDays(cursor, -1)
+            continue
+          }
+          if (logs[cursor]?.completed) {
             streak++
             cursor = addDays(cursor, -1)
           } else {
             break
           }
-          if (streak > 100) break
         }
         return streak
       },
     }),
-    { name: 'dwayne:sessions' }
+    {
+      name: 'dwayne:session',
+      // Migrate data that may have been saved under the wrong key
+      onRehydrateStorage: () => (state) => {
+        if (state && Object.keys(state.logs).length === 0) {
+          try {
+            const stale = localStorage.getItem('dwayne:sessions')
+            if (stale) {
+              const parsed = JSON.parse(stale)
+              if (parsed?.state?.logs) state.logs = parsed.state.logs
+              localStorage.removeItem('dwayne:sessions')
+            }
+          } catch { /* ignore */ }
+        }
+      },
+    }
   )
 )
