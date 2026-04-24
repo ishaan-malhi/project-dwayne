@@ -118,12 +118,13 @@ const Today: FC = () => {
     !tomorrowLog?.completed
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      {/* Header — outside scroll container so iOS PWA never confuses tap with scroll */}
-      <div style={{ flexShrink: 0, paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c' }}>
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      {/* Header */}
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
+              onTouchEnd={e => { e.preventDefault(); setDate(d => addDays(d, -1)) }}
               onClick={() => setDate(d => addDays(d, -1))}
               aria-label="Previous day"
               style={{ width: 40, height: 40, borderRadius: 8, background: '#1c1c1c', border: '1px solid #222', color: '#6b6b6b', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation' }}
@@ -132,6 +133,7 @@ const Today: FC = () => {
               {formatDate(date)}
             </span>
             <button
+              onTouchEnd={e => { e.preventDefault(); setDate(d => addDays(d, 1)) }}
               onClick={() => setDate(d => addDays(d, 1))}
               aria-label="Next day"
               style={{ width: 40, height: 40, borderRadius: 8, background: '#1c1c1c', border: '1px solid #222', color: '#6b6b6b', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation' }}
@@ -154,9 +156,6 @@ const Today: FC = () => {
           {phaseInfo && <span style={{ fontSize: 10, color: '#999' }}>— {phaseInfo.name}</span>}
         </div>
       </div>
-
-      {/* Scrollable content */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
       {show3pmAlert && (
         <div style={{ margin: '12px 16px 0', padding: '10px 12px', background: 'rgba(255,71,71,0.08)', border: '1px solid rgba(255,71,71,0.2)', borderRadius: 8 }}>
@@ -504,7 +503,6 @@ const Today: FC = () => {
         </div>
       </Sheet>
 
-      </div>{/* end scrollable content */}
     </div>
   )
 }
