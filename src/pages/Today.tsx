@@ -118,9 +118,9 @@ const Today: FC = () => {
     !tomorrowLog?.completed
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto">
-      {/* Header */}
-      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c' }}>
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Header — outside scroll container so iOS PWA never confuses tap with scroll */}
+      <div style={{ flexShrink: 0, paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingRight: 16, paddingBottom: 12, paddingLeft: 16, borderBottom: '1px solid #1c1c1c' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -154,6 +154,9 @@ const Today: FC = () => {
           {phaseInfo && <span style={{ fontSize: 10, color: '#999' }}>— {phaseInfo.name}</span>}
         </div>
       </div>
+
+      {/* Scrollable content */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
       {show3pmAlert && (
         <div style={{ margin: '12px 16px 0', padding: '10px 12px', background: 'rgba(255,71,71,0.08)', border: '1px solid rgba(255,71,71,0.2)', borderRadius: 8 }}>
@@ -500,6 +503,8 @@ const Today: FC = () => {
           </button>
         </div>
       </Sheet>
+
+      </div>{/* end scrollable content */}
     </div>
   )
 }
