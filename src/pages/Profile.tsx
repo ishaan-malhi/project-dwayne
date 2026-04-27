@@ -177,7 +177,7 @@ const Profile: FC = () => {
   const { logs } = useSessionStore()
   const streak = useSessionStore(s => s.getStreak())
   const { logWeighIn, logBf, weightHistory, logWeeklyPhoto, getWeeklyPhoto } = useProgressStore()
-  const { height, setHeight } = useSettingsStore()
+  const { height, setHeight, notificationsEnabled, reminderHour, setNotificationsEnabled, setReminderHour } = useSettingsStore()
 
   const todayStr = today()
   const currentWeek = getWeekForDate(todayStr)
@@ -559,6 +559,65 @@ const Profile: FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Notifications */}
+        <div style={{ background: '#141414', border: '1px solid #1c1c1c', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 14px', borderBottom: notificationsEnabled ? '1px solid #1c1c1c' : undefined,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 13, color: '#f0f0f0', fontWeight: 500 }}>Workout reminders</div>
+              <div style={{ fontSize: 11, color: '#6b6b6b', marginTop: 2 }}>
+                {Notification.permission === 'denied'
+                  ? 'Blocked in Settings — enable via iPhone Settings → Safari'
+                  : 'Daily notification if session not logged'}
+              </div>
+            </div>
+            <button
+              aria-label={notificationsEnabled ? 'Disable reminders' : 'Enable reminders'}
+              onClick={async () => {
+                if (!notificationsEnabled) {
+                  const perm = await Notification.requestPermission()
+                  if (perm === 'granted') setNotificationsEnabled(true)
+                } else {
+                  setNotificationsEnabled(false)
+                }
+              }}
+              style={{
+                width: 44, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
+                background: notificationsEnabled ? '#47ff8a' : '#2e2e2e',
+                position: 'relative', flexShrink: 0, transition: 'background 0.2s ease',
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 3, borderRadius: '50%', width: 20, height: 20,
+                background: '#f0f0f0', transition: 'left 0.2s ease',
+                left: notificationsEnabled ? 21 : 3,
+              }} />
+            </button>
+          </div>
+          {notificationsEnabled && (
+            <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, color: '#6b6b6b' }}>Reminder time</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[17, 18, 19, 20].map(h => (
+                  <button
+                    key={h}
+                    onClick={() => setReminderHour(h)}
+                    style={{
+                      padding: '4px 10px', borderRadius: 6, fontSize: 12,
+                      fontFamily: 'JetBrains Mono, monospace',
+                      border: `1px solid ${reminderHour === h ? '#f0f0f0' : '#2e2e2e'}`,
+                      color: reminderHour === h ? '#f0f0f0' : '#6b6b6b',
+                      background: 'transparent',
+                    }}
+                  >
+                    {h}:00
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

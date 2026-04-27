@@ -9,6 +9,7 @@ import { SUPPLEMENTS } from '../data/supplements'
 import { SESSION_LABELS, SESSION_SUBTITLES } from '../data/schedule'
 import { useSessionStore } from '../store/sessionStore'
 import { useNutritionStore } from '../store/nutritionStore'
+import { useSettingsStore } from '../store/settingsStore'
 import SessionLogSheet from '../components/SessionLogSheet'
 import Sheet from '../components/Sheet'
 import WorkoutMode from '../components/WorkoutMode'
@@ -52,6 +53,8 @@ const Today: FC = () => {
   const [showSkip, setShowSkip] = useState(false)
   const [skipReason, setSkipReason] = useState('')
 
+  const { notificationsEnabled, reminderHour } = useSettingsStore()
+
   const scheduledDayType = getDayType(date)
   const phase = getPhaseForDate(date)
   const week = getWeekForDate(date)
@@ -64,7 +67,14 @@ const Today: FC = () => {
 
   const sessionLog = useSessionStore(s => s.getLog(date))
   const streak = useSessionStore(s => s.getStreak())
-  const allLogs = useSessionStore(s => s.logs)
+  // Targeted selector — only re-renders when a bumpedTo value pointing at `date` changes
+  const bumpSource = useSessionStore(s => {
+    const logs = s.logs
+    for (const key of Object.keys(logs)) {
+      if (logs[key].bumpedTo === date) return logs[key]
+    }
+    return undefined
+  })
   const { skipSession, unskipSession, bumpSession } = useSessionStore()
   const tomorrowLog = useSessionStore(s => s.getLog(addDays(date, 1)))
   const nutritionLog = useNutritionStore(s => s.getLog(date))
@@ -74,8 +84,7 @@ const Today: FC = () => {
   const toggleSupplement = useNutritionStore(s => s.toggleSupplement)
   const checkedSupplements = nutritionLog?.checkedSupplements ?? []
 
-  // Resolve incoming bump — a workout from another day moved to this date
-  const bumpSource = Object.values(allLogs).find(l => l.bumpedTo === date)
+  // Effective day type — respects incoming bump
   const dayType = (bumpSource?.type ?? scheduledDayType) as import('../types').DayType
 
   const sessionColor = SESSION_COLORS[dayType]
@@ -116,6 +125,34 @@ const Today: FC = () => {
     !sessionLog?.bumpedTo &&
     !sessionLog?.skipped &&
     !tomorrowLog?.completed
+
+  // Schedule workout reminder — runs after all derived state is defined
+  useEffect(() => {
+    if (!notificationsEnabled || !isTodayDate || !isTrainingDay) return
+    if (sessionLog?.completed || sessionLog?.bumpedTo || sessionLog?.skipped) return
+    if (Notification.permission !== 'granted') return
+    if (!('serviceWorker' in navigator)) return
+
+    const target = new Date()
+    target.setHours(reminderHour, 0, 0, 0)
+    const msUntil = target.getTime() - Date.now()
+    if (msUntil <= 0) return
+
+    const id = setTimeout(async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready
+        reg.showNotification('Time to train 💪', {
+          body: `${SESSION_LABELS[dayType]} not logged — log it or move to tomorrow.`,
+          icon: '/icons/192.png',
+          badge: '/icons/192.png',
+          tag: 'workout-reminder',
+        })
+      } catch { /* silently ignore if notifications unavailable */ }
+    }, msUntil)
+
+    return () => clearTimeout(id)
+  }, [date, notificationsEnabled, reminderHour, isTodayDate, isTrainingDay, dayType,
+      sessionLog?.completed, sessionLog?.bumpedTo, sessionLog?.skipped]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
